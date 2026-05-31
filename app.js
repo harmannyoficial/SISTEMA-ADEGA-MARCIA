@@ -92,7 +92,7 @@ const ENUMS = {
     SEM_PRODUTOS: "Nenhum produto encontrado.",
     ENTREGA_PAUSADA: "Entrega temporariamente indisponível.",
     LOJA_FECHADA: CONFIG.funcionamento.mensagemFechado,
-  },
+  }, 
   FRASES_CATEGORIAS: {
     acai: "🍇 Cremoso, gelado e irresistível — o açaí que você merece!",
     sorvete: "🍦 Uma colherada de felicidade em cada sabor!",

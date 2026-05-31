@@ -700,7 +700,7 @@ h1, h2, h3, h4 { font-family: var(--font-display); }
 .topbar-titulo { font-family: var(--font-display); font-weight: 800; font-size: 16px; }
 .topbar-acoes { display: flex; gap: 8px; }
 
-/* CONTENT */
+/* CONTENT */ 
 .adm-content {
   flex: 1; overflow: auto;
   margin-left: 0;
