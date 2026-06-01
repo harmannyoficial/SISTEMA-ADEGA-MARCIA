@@ -773,7 +773,7 @@ function carregarDadosDemo() {
     { nome: "Cafeteria", emoji: "☕", cor: "#6D4C41" },
     { nome: "Frutas", emoji: "🍎", cor: "#E53935" },
     { nome: "Sucos", emoji: "🍹", cor: "#FB8C00" },
-    { nome: "Hortifruti", emoji: "🥬", cor: "#43A047" },
+    { nome: "Essências", emoji: "💨", cor: "#616b62" },
   ];
   cats.forEach(c => CATEGORIAS.criar(c));
   const comps = [
@@ -795,7 +795,10 @@ function carregarDadosDemo() {
     { nome: "Café Especial", descricao: "Grãos selecionados, sabor intenso", categoria: categorias[2]?.id, preco: 8.00, unidade: "un", tamanhos: [], estoque: 200, imagem: "", temComplementos: false },
     { nome: "Maçã Fuji", descricao: "Maçã importada super doce", categoria: categorias[3]?.id, preco: 4.50, unidade: "kg", tamanhos: [], estoque: 30, imagem: "", temComplementos: false },
     { nome: "Suco de Laranja", descricao: "100% natural, espremido na hora", categoria: categorias[4]?.id, preco: 10.00, unidade: "un", tamanhos: ["300ml", "500ml"], estoque: 60, imagem: "", temComplementos: false },
-    { nome: "Alface Crespa", descricao: "Fresca, sem agrotóxicos", categoria: categorias[5]?.id, preco: 3.50, unidade: "un", tamanhos: [], estoque: 40, imagem: "", temComplementos: false },
+    { nome: "onix banana", descricao: "Fresca, sem agrotóxicos", categoria: categorias[5]?.id, preco: 3.50, unidade: "un", tamanhos: [], estoque: 40, imagem: "", temComplementos: false },
+    { nome: "Suco de Laranja", descricao: "100% natural, espremido na hora", categoria: categorias[4]?.id, preco: 10.00, unidade: "un", tamanhos: ["300ml", "500ml"], estoque: 60, imagem: "", temComplementos: false },
+    { nome: "onix banana", descricao: "Fresca, sem agrotóxicos", categoria: categorias[5]?.id, preco: 3.50, unidade: "un", tamanhos: [], estoque: 40, imagem: "", temComplementos: false },
+  
   ];
   prods.forEach(p => PRODUTOS.criar(p));
 }
