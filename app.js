@@ -1,20 +1,14 @@
 // ============================================================
-//  ██████╗ ██████╗ ███╗   ██╗███████╗██╗ ██████╗
-// ██╔════╝██╔═══██╗████╗  ██║██╔════╝██║██╔════╝
-// ██║     ██║   ██║██╔██╗ ██║█████╗  ██║██║  ███╗
-// ██║     ██║   ██║██║╚██╗██║██╔══╝  ██║██║   ██║
-// ╚██████╗╚██████╔╝██║ ╚████║██║     ██║╚██████╔╝
-//  ╚═════╝ ╚═════╝ ╚═╝  ╚═══╝╚═╝     ╚═╝ ╚═════╝
-// SISTEMA DELIVERY UNIVERSAL — versão 1.0
+//  SISTEMA DELIVERY — app.js v2.0
+//  Estado centralizado, tabs, exclusão de pedidos com estorno
 // ============================================================
-// CONFIGURAÇÕES DO CLIENTE — EDITE APENAS AQUI
-// ============================================================
+
 const CONFIG = {
   loja: {
     nome: "Açaí & Cia",
-    slogan: "Do campo à sua mesa, com amor e sabor!",
-    logo: "🍇", // Pode ser URL de imagem ou emoji
-    logoUrl: "",  // Se quiser usar imagem: "https://url-da-imagem.png"
+    slogan: "Adega, tabacaria e muito mais!",
+    logo: "🍇",
+    logoUrl: "",
     banner: "",
     bannerTexto: "Açaí com frutas selecionadas e muito mais!",
     corPrimaria: "#5B2D8E",
@@ -24,8 +18,8 @@ const CONFIG = {
     corTexto: "#F0EAF8",
   },
   contato: {
-    whatsapp: "5511959175925", // Número do ADM para receber pedidos
-    whatsappAdm: "5511999999999", // Número separado se necessário
+    whatsapp: "5511959175925",
+    whatsappAdm: "5511999999999",
     endereco: "Rua das Flores, 123 — Centro",
     cidade: "São Paulo — SP",
     instagram: "@acaicia",
@@ -38,19 +32,19 @@ const CONFIG = {
       { dia: "Sábado", hora: "08:00 – 23:00" },
       { dia: "Domingo", hora: "09:00 – 21:00" },
     ],
-    aberto: true, // true = aberto, false = fechado
+    aberto: true,
     mensagemFechado: "Estamos fechados no momento. Volte em breve!",
   },
   delivery: {
     taxaEntrega: 5.00,
     pedidoMinimo: 15.00,
     tempoEstimado: "30–50 min",
-    entregaAtiva: true, // ADM pode pausar entrega
+    entregaAtiva: true,
     retiradaAtiva: true,
   },
   senha: {
-    admin: "1234", // Senha do painel administrativo
-    confirmacoes: "1234", // Senha para exclusões e alterações críticas
+    admin: "1234",
+    confirmacoes: "1234",
   },
   pagamento: {
     formas: ["PIX", "Dinheiro", "Cartão de Crédito", "Cartão de Débito"],
@@ -58,9 +52,6 @@ const CONFIG = {
   },
 };
 
-// ============================================================
-// ENUMS — Textos centralizados
-// ============================================================
 const ENUMS = {
   STATUS_PEDIDO: {
     PENDENTE: "pendente",
@@ -70,13 +61,7 @@ const ENUMS = {
     ENTREGUE: "entregue",
     CANCELADO: "cancelado",
   },
-  TIPO_ENTREGA: {
-    ENTREGA: "entrega",
-    RETIRADA: "retirada",
-  },
-  UNIDADES: ["un", "kg", "g", "L", "ml", "cx", "pct", "dz"],
-  TAMANHOS: ["PP", "P", "M", "G", "GG", "300ml", "400ml", "500ml", "700ml", "1L"],
-  MODAL_TIPOS: { SUCESSO: "sucesso", ERRO: "erro", CONFIRMACAO: "confirmacao", INFO: "info" },
+  TIPO_ENTREGA: { ENTREGA: "entrega", RETIRADA: "retirada" },
   MSGS: {
     PRODUTO_SALVO: "Produto salvo com sucesso!",
     PRODUTO_EXCLUIDO: "Produto excluído com sucesso!",
@@ -84,48 +69,68 @@ const ENUMS = {
     COMPLEMENTO_SALVO: "Complemento salvo com sucesso!",
     CONFIG_SALVA: "Configurações salvas com sucesso!",
     SENHA_ERRADA: "Senha incorreta. Tente novamente.",
-    ESTOQUE_BAIXO: "Atenção: estoque baixo!",
     PEDIDO_ENVIADO: "Pedido enviado pelo WhatsApp!",
     CARRINHO_VAZIO: "Seu carrinho está vazio.",
     CAMPO_OBRIGATORIO: "Preencha todos os campos obrigatórios.",
     CONFIRMAR_EXCLUSAO: "Tem certeza que deseja excluir?",
     SEM_PRODUTOS: "Nenhum produto encontrado.",
-    ENTREGA_PAUSADA: "Entrega temporariamente indisponível.",
-    LOJA_FECHADA: CONFIG.funcionamento.mensagemFechado,
-  }, 
+    PEDIDO_EXCLUIDO: "Pedido excluído e estoque revertido!",
+  },
   FRASES_CATEGORIAS: {
-    acai: "🍇 Cremoso, gelado e irresistível — o açaí que você merece!",
+    acai: "🍇 Cremoso, gelado e irresistível!",
     sorvete: "🍦 Uma colherada de felicidade em cada sabor!",
     cafe: "☕ O aroma que desperta, o sabor que conquista!",
-    suco: "🍹 Natureza em cada gole, saúde em cada sip!",
-    fruta: "🍎 Da natureza para você — frescor e saúde garantidos!",
-    verdura: "🥬 Da horta para sua mesa — sem agrotóxicos, com amor!",
+    suco: "🍹 Natureza em cada gole!",
+    fruta: "🍎 Da natureza para você — frescor garantido!",
+    verdura: "🥬 Da horta para sua mesa!",
     legume: "🥕 Cor, sabor e nutrição em cada detalhe!",
     lanche: "🥪 Rápido, gostoso e feito com carinho!",
-    doce: "🍰 Para adoçar o seu dia com o melhor sabor!",
-    bebida: "🥤 Refrescante e saborosa, do jeito que você gosta!",
-    complemento: "✨ Personalize do seu jeito — a combinação perfeita é sua!",
+    doce: "🍰 Para adoçar o seu dia!",
+    bebida: "🥤 Refrescante do jeito que você gosta!",
+    complemento: "✨ Personalize do seu jeito!",
     default: "🌟 Qualidade e sabor em cada detalhe!",
   },
 };
 
 // ============================================================
-// ESTADO DA APLICAÇÃO
+// ESTADO CENTRALIZADO COM SISTEMA REATIVO
 // ============================================================
-let STATE = {
-  carrinho: [],
-  produtos: [],
-  categorias: [],
-  complementos: [],
-  pedidos: [],
-  adminLogado: false,
-  paginaAtual: "catalogo",
-  categoriaFiltro: "todos",
-  buscaTermo: "",
+const STATE = {
+  _data: {
+    carrinho: [],
+    produtos: [],
+    categorias: [],
+    complementos: [],
+    pedidos: [],
+    adminLogado: false,
+    categoriaFiltro: "todos",
+    buscaTermo: "",
+  },
+  _listeners: {},
+
+  get(key) { return this._data[key]; },
+  set(key, value) {
+    this._data[key] = value;
+    this._notify(key, value);
+    this._notify("*", { key, value });
+  },
+  update(key, fn) {
+    const val = fn(this._data[key]);
+    this.set(key, val);
+    return val;
+  },
+  on(event, fn) {
+    if (!this._listeners[event]) this._listeners[event] = [];
+    this._listeners[event].push(fn);
+    return () => { this._listeners[event] = this._listeners[event].filter(f => f !== fn); };
+  },
+  _notify(event, value) {
+    (this._listeners[event] || []).forEach(fn => fn(value));
+  },
 };
 
 // ============================================================
-// STORAGE — Persistência com localStorage
+// STORAGE
 // ============================================================
 const STORAGE = {
   KEYS: {
@@ -142,14 +147,12 @@ const STORAGE = {
   set(key, value) {
     try { localStorage.setItem(key, JSON.stringify(value)); return true; } catch { return false; }
   },
-  remove(key) { localStorage.removeItem(key); },
   carregarTudo() {
-    STATE.produtos = this.get(this.KEYS.PRODUTOS) || [];
-    STATE.categorias = this.get(this.KEYS.CATEGORIAS) || [];
-    STATE.complementos = this.get(this.KEYS.COMPLEMENTOS) || [];
-    STATE.pedidos = this.get(this.KEYS.PEDIDOS) || [];
-    STATE.carrinho = this.get(this.KEYS.CARRINHO) || [];
-    // Mesclar config salva do admin
+    STATE.set("produtos", this.get(this.KEYS.PRODUTOS) || []);
+    STATE.set("categorias", this.get(this.KEYS.CATEGORIAS) || []);
+    STATE.set("complementos", this.get(this.KEYS.COMPLEMENTOS) || []);
+    STATE.set("pedidos", this.get(this.KEYS.PEDIDOS) || []);
+    STATE.set("carrinho", this.get(this.KEYS.CARRINHO) || []);
     const cfgSalva = this.get(this.KEYS.CONFIG);
     if (cfgSalva) {
       CONFIG.loja = { ...CONFIG.loja, ...cfgSalva.loja };
@@ -159,12 +162,17 @@ const STORAGE = {
       CONFIG.senha = { ...CONFIG.senha, ...cfgSalva.senha };
     }
   },
-  salvarProdutos() { this.set(this.KEYS.PRODUTOS, STATE.produtos); },
-  salvarCategorias() { this.set(this.KEYS.CATEGORIAS, STATE.categorias); },
-  salvarComplementos() { this.set(this.KEYS.COMPLEMENTOS, STATE.complementos); },
-  salvarPedidos() { this.set(this.KEYS.PEDIDOS, STATE.pedidos); },
-  salvarCarrinho() { this.set(this.KEYS.CARRINHO, STATE.carrinho); },
-  salvarConfig() { this.set(this.KEYS.CONFIG, { loja: CONFIG.loja, contato: CONFIG.contato, funcionamento: CONFIG.funcionamento, delivery: CONFIG.delivery, senha: CONFIG.senha }); },
+  salvarProdutos() { this.set(this.KEYS.PRODUTOS, STATE.get("produtos")); },
+  salvarCategorias() { this.set(this.KEYS.CATEGORIAS, STATE.get("categorias")); },
+  salvarComplementos() { this.set(this.KEYS.COMPLEMENTOS, STATE.get("complementos")); },
+  salvarPedidos() { this.set(this.KEYS.PEDIDOS, STATE.get("pedidos")); },
+  salvarCarrinho() { this.set(this.KEYS.CARRINHO, STATE.get("carrinho")); },
+  salvarConfig() {
+    this.set(this.KEYS.CONFIG, {
+      loja: CONFIG.loja, contato: CONFIG.contato,
+      funcionamento: CONFIG.funcionamento, delivery: CONFIG.delivery, senha: CONFIG.senha
+    });
+  },
 };
 
 // ============================================================
@@ -173,11 +181,21 @@ const STORAGE = {
 const UTIL = {
   id() { return Date.now().toString(36) + Math.random().toString(36).substr(2); },
   formatarMoeda(v) { return (v || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" }); },
-  formatarData(d) { return new Date(d).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }); },
+  formatarData(d) {
+    return new Date(d).toLocaleDateString("pt-BR", {
+      day: "2-digit", month: "2-digit", year: "numeric",
+      hour: "2-digit", minute: "2-digit"
+    });
+  },
   hoje() { return new Date().toISOString().slice(0, 10); },
   mesAtual() { return new Date().toISOString().slice(0, 7); },
   anoAtual() { return new Date().getFullYear().toString(); },
-  slugify(str) { return str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, ""); },
+  slugify(str) {
+    return str.toLowerCase().normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/\s+/g, "_")
+      .replace(/[^a-z0-9_]/g, "");
+  },
   gerarFraseCategoria(nome) {
     const slug = UTIL.slugify(nome);
     for (const chave in ENUMS.FRASES_CATEGORIAS) {
@@ -185,8 +203,14 @@ const UTIL = {
     }
     return ENUMS.FRASES_CATEGORIAS.default;
   },
-  sanitize(str) { const d = document.createElement("div"); d.textContent = str || ""; return d.innerHTML; },
-  verificarSenha(senha) { return senha === CONFIG.senha.confirmacoes || senha === CONFIG.senha.admin; },
+  sanitize(str) {
+    const d = document.createElement("div");
+    d.textContent = str || "";
+    return d.innerHTML;
+  },
+  verificarSenha(senha) {
+    return senha === CONFIG.senha.confirmacoes || senha === CONFIG.senha.admin;
+  },
   aplicarCores() {
     const r = document.documentElement.style;
     r.setProperty("--primary", CONFIG.loja.corPrimaria);
@@ -232,6 +256,7 @@ const MODAL = {
         else { document.getElementById("modal-senha-input").classList.add("input-erro"); MODAL.shake(); }
       };
       document.getElementById("modal-senha-input")?.addEventListener("keydown", e => { if (e.key === "Enter") btn.click(); });
+      setTimeout(() => document.getElementById("modal-senha-input")?.focus(), 100);
     } else if (isConfirm) {
       btn.onclick = () => { MODAL.fechar(); if (onConfirm) onConfirm(); };
     } else {
@@ -265,6 +290,46 @@ const MODAL = {
 };
 
 // ============================================================
+// SISTEMA DE TABS (Admin)
+// ============================================================
+const TABS = {
+  init(secaoId) {
+    const secao = document.getElementById(secaoId);
+    if (!secao) return;
+    const tabBtns = secao.querySelectorAll(".tab-btn");
+    const tabPanes = secao.querySelectorAll(".tab-pane");
+    tabBtns.forEach(btn => {
+      btn.addEventListener("click", () => {
+        const target = btn.dataset.tab;
+        tabBtns.forEach(b => b.classList.remove("ativo"));
+        tabPanes.forEach(p => p.classList.remove("ativo"));
+        btn.classList.add("ativo");
+        secao.querySelector(`#${target}`)?.classList.add("ativo");
+        // Hook para renderizar conteúdo quando aba é aberta
+        const event = new CustomEvent("tabchange", { detail: { tab: target, secao: secaoId } });
+        document.dispatchEvent(event);
+      });
+    });
+    // Ativar primeira aba por padrão
+    if (tabBtns.length > 0) {
+      tabBtns[0].click();
+    }
+  },
+  initAll() {
+    document.querySelectorAll(".adm-secao").forEach(sec => {
+      if (sec.querySelector(".tab-btn")) this.init(sec.id);
+    });
+  },
+  ir(secaoId, tabId) {
+    mostrarSecao(secaoId);
+    const secao = document.getElementById(secaoId);
+    if (!secao) return;
+    const btn = secao.querySelector(`[data-tab="${tabId}"]`);
+    if (btn) btn.click();
+  },
+};
+
+// ============================================================
 // CARRINHO
 // ============================================================
 const CARRINHO = {
@@ -280,48 +345,53 @@ const CARRINHO = {
       complementos: complementosSelecionados || [],
       observacao: observacao || "",
     };
-    STATE.carrinho.push(item);
+    STATE.update("carrinho", c => [...c, item]);
     STORAGE.salvarCarrinho();
-    this.atualizarUI();
     MODAL.toast("Item adicionado ao carrinho! 🛒");
   },
   remover(id) {
-    STATE.carrinho = STATE.carrinho.filter(i => i.id !== id);
+    STATE.update("carrinho", c => c.filter(i => i.id !== id));
     STORAGE.salvarCarrinho();
-    this.atualizarUI();
   },
   alterarQtd(id, delta) {
-    const item = STATE.carrinho.find(i => i.id === id);
-    if (item) {
-      item.quantidade = Math.max(1, item.quantidade + delta);
-      STORAGE.salvarCarrinho();
-      this.atualizarUI();
-    }
+    STATE.update("carrinho", c => c.map(i =>
+      i.id === id ? { ...i, quantidade: Math.max(1, i.quantidade + delta) } : i
+    ));
+    STORAGE.salvarCarrinho();
   },
-  limpar() { STATE.carrinho = []; STORAGE.salvarCarrinho(); this.atualizarUI(); },
+  limpar() {
+    STATE.set("carrinho", []);
+    STORAGE.salvarCarrinho();
+  },
   total() {
-    return STATE.carrinho.reduce((s, i) => {
+    return STATE.get("carrinho").reduce((s, i) => {
       const compPreco = i.complementos.reduce((cs, c) => cs + (c.preco || 0), 0);
       return s + (i.preco + compPreco) * i.quantidade;
     }, 0);
   },
   atualizarUI() {
     const badge = document.getElementById("carrinho-badge");
-    const count = STATE.carrinho.reduce((s, i) => s + i.quantidade, 0);
-    if (badge) { badge.textContent = count; badge.style.display = count > 0 ? "flex" : "none"; }
+    const count = STATE.get("carrinho").reduce((s, i) => s + i.quantidade, 0);
+    if (badge) {
+      badge.textContent = count;
+      badge.style.display = count > 0 ? "flex" : "none";
+    }
     if (document.getElementById("carrinho-itens")) this.renderizarCarrinho();
   },
   renderizarCarrinho() {
     const container = document.getElementById("carrinho-itens");
     if (!container) return;
-    if (STATE.carrinho.length === 0) {
+    const carrinho = STATE.get("carrinho");
+    if (carrinho.length === 0) {
       container.innerHTML = `<div class="carrinho-vazio"><span>🛒</span><p>${ENUMS.MSGS.CARRINHO_VAZIO}</p></div>`;
     } else {
-      container.innerHTML = STATE.carrinho.map(item => {
+      container.innerHTML = carrinho.map(item => {
         const compPreco = item.complementos.reduce((s, c) => s + (c.preco || 0), 0);
         const subtotal = (item.preco + compPreco) * item.quantidade;
         return `<div class="carrinho-item" data-id="${item.id}">
-          <div class="ci-img">${item.imagem ? `<img src="${UTIL.sanitize(item.imagem)}" alt="">` : `<span class="ci-emoji">🛒</span>`}</div>
+          <div class="ci-img">${item.imagem
+            ? `<img src="${UTIL.sanitize(item.imagem)}" alt="">`
+            : `<span class="ci-emoji">🛒</span>`}</div>
           <div class="ci-info">
             <strong>${UTIL.sanitize(item.nome)}</strong>
             ${item.tamanho ? `<small>Tamanho: ${item.tamanho}</small>` : ""}
@@ -338,9 +408,13 @@ const CARRINHO = {
         </div>`;
       }).join("");
     }
+    this._atualizarTotais();
+  },
+  _atualizarTotais() {
     const subtotal = this.total();
     const tipoEntrega = document.querySelector('input[name="tipo-entrega"]:checked')?.value || ENUMS.TIPO_ENTREGA.RETIRADA;
-    const taxa = tipoEntrega === ENUMS.TIPO_ENTREGA.ENTREGA && CONFIG.delivery.entregaAtiva ? CONFIG.delivery.taxaEntrega : 0;
+    const taxa = tipoEntrega === ENUMS.TIPO_ENTREGA.ENTREGA && CONFIG.delivery.entregaAtiva
+      ? CONFIG.delivery.taxaEntrega : 0;
     const total = subtotal + taxa;
     const elSub = document.getElementById("carrinho-subtotal");
     const elTaxa = document.getElementById("carrinho-taxa");
@@ -351,14 +425,24 @@ const CARRINHO = {
   },
 };
 
+// Reatividade: carrinho
+STATE.on("carrinho", () => CARRINHO.atualizarUI());
+
 // ============================================================
-// WHATSAPP — Geração de mensagem
+// WHATSAPP
 // ============================================================
 const WPP = {
   gerarMensagem(cliente, tipoEntrega, formaPagamento, endereco) {
-    const linhas = [`🛒 *NOVO PEDIDO — ${CONFIG.loja.nome}*`, `━━━━━━━━━━━━━━━━━━━━━`, `👤 *Cliente:* ${cliente.nome}`, `📱 *Tel:* ${cliente.telefone}`, ``];
-    linhas.push(`📦 *ITENS DO PEDIDO:*`);
-    STATE.carrinho.forEach((item, i) => {
+    const carrinho = STATE.get("carrinho");
+    const linhas = [
+      `🛒 *NOVO PEDIDO — ${CONFIG.loja.nome}*`,
+      `━━━━━━━━━━━━━━━━━━━━━`,
+      `👤 *Cliente:* ${cliente.nome}`,
+      `📱 *Tel:* ${cliente.telefone}`,
+      ``,
+      `📦 *ITENS DO PEDIDO:*`,
+    ];
+    carrinho.forEach((item, i) => {
       const compPreco = item.complementos.reduce((s, c) => s + (c.preco || 0), 0);
       linhas.push(`\n${i + 1}. *${item.nome}*${item.tamanho ? ` (${item.tamanho})` : ""}`);
       linhas.push(`   Qtd: ${item.quantidade}x — ${UTIL.formatarMoeda(item.preco)}`);
@@ -367,7 +451,8 @@ const WPP = {
       linhas.push(`   Subtotal: ${UTIL.formatarMoeda((item.preco + compPreco) * item.quantidade)}`);
     });
     const subtotal = CARRINHO.total();
-    const taxa = tipoEntrega === ENUMS.TIPO_ENTREGA.ENTREGA && CONFIG.delivery.entregaAtiva ? CONFIG.delivery.taxaEntrega : 0;
+    const taxa = tipoEntrega === ENUMS.TIPO_ENTREGA.ENTREGA && CONFIG.delivery.entregaAtiva
+      ? CONFIG.delivery.taxaEntrega : 0;
     linhas.push(`\n━━━━━━━━━━━━━━━━━━━━━`);
     linhas.push(`💰 *Subtotal:* ${UTIL.formatarMoeda(subtotal)}`);
     linhas.push(`🚚 *${tipoEntrega === ENUMS.TIPO_ENTREGA.ENTREGA ? "Taxa de entrega" : "Retirada"}:* ${taxa > 0 ? UTIL.formatarMoeda(taxa) : "Grátis"}`);
@@ -378,14 +463,15 @@ const WPP = {
     return encodeURIComponent(linhas.join("\n"));
   },
   enviar(cliente, tipoEntrega, formaPagamento, endereco) {
-    if (STATE.carrinho.length === 0) { MODAL.erro(ENUMS.MSGS.CARRINHO_VAZIO); return; }
+    const carrinho = STATE.get("carrinho");
+    if (carrinho.length === 0) { MODAL.erro(ENUMS.MSGS.CARRINHO_VAZIO); return; }
     if (!cliente.nome || !cliente.telefone) { MODAL.erro(ENUMS.MSGS.CAMPO_OBRIGATORIO); return; }
-    // Salvar pedido
+
     const pedido = {
       id: UTIL.id(),
       data: new Date().toISOString(),
       cliente,
-      itens: [...STATE.carrinho],
+      itens: [...carrinho],
       tipoEntrega,
       formaPagamento,
       endereco,
@@ -394,24 +480,33 @@ const WPP = {
       total: CARRINHO.total() + (tipoEntrega === ENUMS.TIPO_ENTREGA.ENTREGA ? CONFIG.delivery.taxaEntrega : 0),
       status: ENUMS.STATUS_PEDIDO.PENDENTE,
     };
-    STATE.pedidos.push(pedido);
+
+    STATE.update("pedidos", p => [...p, pedido]);
     STORAGE.salvarPedidos();
+
     // Decrementar estoque
-    STATE.carrinho.forEach(item => {
-      const prod = STATE.produtos.find(p => p.id === item.produtoId);
+    const produtos = [...STATE.get("produtos")];
+    const complementos = [...STATE.get("complementos")];
+
+    carrinho.forEach(item => {
+      const prod = produtos.find(p => p.id === item.produtoId);
       if (prod && prod.estoque !== undefined && prod.estoque !== null && prod.estoque !== "") {
         prod.estoque = Math.max(0, (prod.estoque || 0) - item.quantidade);
+        prod.vendas = (prod.vendas || 0) + item.quantidade;
       }
-      // Decrementar estoque de complementos
       item.complementos.forEach(c => {
-        const comp = STATE.complementos.find(x => x.id === c.id);
+        const comp = complementos.find(x => x.id === c.id);
         if (comp && comp.estoque !== undefined && comp.estoque !== "") {
           comp.estoque = Math.max(0, (comp.estoque || 0) - item.quantidade);
         }
       });
     });
+
+    STATE.set("produtos", produtos);
+    STATE.set("complementos", complementos);
     STORAGE.salvarProdutos();
     STORAGE.salvarComplementos();
+
     const msg = this.gerarMensagem(cliente, tipoEntrega, formaPagamento, endereco);
     const num = CONFIG.contato.whatsapp.replace(/\D/g, "");
     window.open(`https://wa.me/${num}?text=${msg}`, "_blank");
@@ -427,33 +522,43 @@ const WPP = {
 const PRODUTOS = {
   criar(dados) {
     const p = { id: UTIL.id(), ativo: true, dataCriacao: new Date().toISOString(), vendas: 0, ...dados };
-    STATE.produtos.push(p);
+    STATE.update("produtos", list => [...list, p]);
     STORAGE.salvarProdutos();
     return p;
   },
   editar(id, dados) {
-    const idx = STATE.produtos.findIndex(p => p.id === id);
-    if (idx > -1) { STATE.produtos[idx] = { ...STATE.produtos[idx], ...dados }; STORAGE.salvarProdutos(); return true; }
-    return false;
+    STATE.update("produtos", list => list.map(p => p.id === id ? { ...p, ...dados } : p));
+    STORAGE.salvarProdutos();
+    return true;
   },
   excluir(id) {
-    STATE.produtos = STATE.produtos.filter(p => p.id !== id);
+    STATE.update("produtos", list => list.filter(p => p.id !== id));
     STORAGE.salvarProdutos();
   },
   pausar(id) {
-    const p = STATE.produtos.find(x => x.id === id);
-    if (p) { p.ativo = !p.ativo; STORAGE.salvarProdutos(); }
+    STATE.update("produtos", list => list.map(p => p.id === id ? { ...p, ativo: !p.ativo } : p));
+    STORAGE.salvarProdutos();
   },
   filtrar(termo, categoria) {
-    return STATE.produtos.filter(p => {
+    return STATE.get("produtos").filter(p => {
       const matchCat = !categoria || categoria === "todos" || p.categoria === categoria;
-      const matchTermo = !termo || p.nome.toLowerCase().includes(termo.toLowerCase()) || (p.descricao || "").toLowerCase().includes(termo.toLowerCase());
+      const matchTermo = !termo || p.nome.toLowerCase().includes(termo.toLowerCase()) ||
+        (p.descricao || "").toLowerCase().includes(termo.toLowerCase());
       return matchCat && matchTermo;
     });
   },
-  comEstoqueBaixo(limite = 5) { return STATE.produtos.filter(p => p.estoque !== "" && p.estoque !== undefined && Number(p.estoque) <= limite && Number(p.estoque) >= 0); },
-  vencendo() { const hoje = UTIL.hoje(); return STATE.produtos.filter(p => p.validade && p.validade <= hoje); },
-  maisPedidos() { return [...STATE.produtos].sort((a, b) => (b.vendas || 0) - (a.vendas || 0)).slice(0, 5); },
+  comEstoqueBaixo(limite = 5) {
+    return STATE.get("produtos").filter(p =>
+      p.estoque !== "" && p.estoque !== undefined && Number(p.estoque) <= limite && Number(p.estoque) >= 0
+    );
+  },
+  vencendo() {
+    const hoje = UTIL.hoje();
+    return STATE.get("produtos").filter(p => p.validade && p.validade <= hoje);
+  },
+  maisPedidos() {
+    return [...STATE.get("produtos")].sort((a, b) => (b.vendas || 0) - (a.vendas || 0)).slice(0, 5);
+  },
 };
 
 // ============================================================
@@ -461,34 +566,38 @@ const PRODUTOS = {
 // ============================================================
 const CATEGORIAS = {
   criar(dados) {
-    const c = { id: UTIL.id(), ativo: true, ordem: STATE.categorias.length, ...dados };
+    const c = { id: UTIL.id(), ativo: true, ordem: STATE.get("categorias").length, ...dados };
     if (!c.frase) c.frase = UTIL.gerarFraseCategoria(c.nome);
-    STATE.categorias.push(c);
+    STATE.update("categorias", list => [...list, c]);
     STORAGE.salvarCategorias();
     return c;
   },
   editar(id, dados) {
-    const idx = STATE.categorias.findIndex(c => c.id === id);
-    if (idx > -1) { STATE.categorias[idx] = { ...STATE.categorias[idx], ...dados }; STORAGE.salvarCategorias(); return true; }
-    return false;
+    STATE.update("categorias", list => list.map(c => c.id === id ? { ...c, ...dados } : c));
+    STORAGE.salvarCategorias();
+    return true;
   },
   excluir(id) {
-    STATE.categorias = STATE.categorias.filter(c => c.id !== id);
+    STATE.update("categorias", list => list.filter(c => c.id !== id));
     STORAGE.salvarCategorias();
   },
   pausar(id) {
-    const c = STATE.categorias.find(x => x.id === id);
-    if (c) { c.ativo = !c.ativo; STORAGE.salvarCategorias(); }
-  },
-  reordenar(ids) {
-    ids.forEach((id, i) => {
-      const c = STATE.categorias.find(x => x.id === id);
-      if (c) c.ordem = i;
-    });
-    STATE.categorias.sort((a, b) => a.ordem - b.ordem);
+    STATE.update("categorias", list => list.map(c => c.id === id ? { ...c, ativo: !c.ativo } : c));
     STORAGE.salvarCategorias();
   },
-  ativas() { return STATE.categorias.filter(c => c.ativo).sort((a, b) => a.ordem - b.ordem); },
+  reordenar(ids) {
+    const categorias = STATE.get("categorias");
+    ids.forEach((id, i) => {
+      const c = categorias.find(x => x.id === id);
+      if (c) c.ordem = i;
+    });
+    categorias.sort((a, b) => a.ordem - b.ordem);
+    STATE.set("categorias", [...categorias]);
+    STORAGE.salvarCategorias();
+  },
+  ativas() {
+    return STATE.get("categorias").filter(c => c.ativo).sort((a, b) => a.ordem - b.ordem);
+  },
 };
 
 // ============================================================
@@ -497,47 +606,167 @@ const CATEGORIAS = {
 const COMPLEMENTOS = {
   criar(dados) {
     const c = { id: UTIL.id(), ativo: true, ...dados };
-    STATE.complementos.push(c);
+    STATE.update("complementos", list => [...list, c]);
     STORAGE.salvarComplementos();
     return c;
   },
   editar(id, dados) {
-    const idx = STATE.complementos.findIndex(c => c.id === id);
-    if (idx > -1) { STATE.complementos[idx] = { ...STATE.complementos[idx], ...dados }; STORAGE.salvarComplementos(); return true; }
-    return false;
+    STATE.update("complementos", list => list.map(c => c.id === id ? { ...c, ...dados } : c));
+    STORAGE.salvarComplementos();
+    return true;
   },
-  excluir(id) { STATE.complementos = STATE.complementos.filter(c => c.id !== id); STORAGE.salvarComplementos(); },
+  excluir(id) {
+    STATE.update("complementos", list => list.filter(c => c.id !== id));
+    STORAGE.salvarComplementos();
+  },
   pausar(id) {
-    const c = STATE.complementos.find(x => x.id === id);
-    if (c) { c.ativo = !c.ativo; STORAGE.salvarComplementos(); }
+    STATE.update("complementos", list => list.map(c => c.id === id ? { ...c, ativo: !c.ativo } : c));
+    STORAGE.salvarComplementos();
   },
-  ativos() { return STATE.complementos.filter(c => c.ativo); },
+  ativos() { return STATE.get("complementos").filter(c => c.ativo); },
 };
 
 // ============================================================
-// DASHBOARD — Faturamento
+// PEDIDOS — com exclusão e estorno
+// ============================================================
+const PEDIDOS = {
+  excluir(id) {
+    const pedidos = STATE.get("pedidos");
+    const pedido = pedidos.find(p => p.id === id);
+    if (!pedido) return;
+
+    // Estornar estoque dos produtos
+    const produtos = [...STATE.get("produtos")];
+    const complementos = [...STATE.get("complementos")];
+
+    (pedido.itens || []).forEach(item => {
+      const prod = produtos.find(p => p.id === item.produtoId);
+      if (prod) {
+        if (prod.estoque !== undefined && prod.estoque !== null && prod.estoque !== "") {
+          prod.estoque = (prod.estoque || 0) + item.quantidade;
+        }
+        prod.vendas = Math.max(0, (prod.vendas || 0) - item.quantidade);
+      }
+      // Estornar complementos
+      (item.complementos || []).forEach(c => {
+        const comp = complementos.find(x => x.id === c.id);
+        if (comp && comp.estoque !== undefined && comp.estoque !== "") {
+          comp.estoque = (comp.estoque || 0) + item.quantidade;
+        }
+      });
+    });
+
+    // Remover pedido
+    STATE.update("pedidos", list => list.filter(p => p.id !== id));
+    STATE.set("produtos", produtos);
+    STATE.set("complementos", complementos);
+
+    STORAGE.salvarPedidos();
+    STORAGE.salvarProdutos();
+    STORAGE.salvarComplementos();
+  },
+};
+
+// ============================================================
+// DASHBOARD
 // ============================================================
 const DASHBOARD = {
   faturamentoDia() {
     const hoje = UTIL.hoje();
-    return STATE.pedidos.filter(p => p.data?.startsWith(hoje) && p.status !== ENUMS.STATUS_PEDIDO.CANCELADO).reduce((s, p) => s + (p.total || 0), 0);
+    return STATE.get("pedidos")
+      .filter(p => p.data?.startsWith(hoje) && p.status !== ENUMS.STATUS_PEDIDO.CANCELADO)
+      .reduce((s, p) => s + (p.total || 0), 0);
   },
   faturamentoMes() {
     const mes = UTIL.mesAtual();
-    return STATE.pedidos.filter(p => p.data?.startsWith(mes) && p.status !== ENUMS.STATUS_PEDIDO.CANCELADO).reduce((s, p) => s + (p.total || 0), 0);
+    return STATE.get("pedidos")
+      .filter(p => p.data?.startsWith(mes) && p.status !== ENUMS.STATUS_PEDIDO.CANCELADO)
+      .reduce((s, p) => s + (p.total || 0), 0);
   },
   faturamentoAno() {
     const ano = UTIL.anoAtual();
-    return STATE.pedidos.filter(p => p.data?.startsWith(ano) && p.status !== ENUMS.STATUS_PEDIDO.CANCELADO).reduce((s, p) => s + (p.total || 0), 0);
+    return STATE.get("pedidos")
+      .filter(p => p.data?.startsWith(ano) && p.status !== ENUMS.STATUS_PEDIDO.CANCELADO)
+      .reduce((s, p) => s + (p.total || 0), 0);
   },
-  totalPedidos() { return STATE.pedidos.length; },
+  totalPedidos() { return STATE.get("pedidos").length; },
+  atualizar() {
+    const s = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+    s("fat-dia", UTIL.formatarMoeda(this.faturamentoDia()));
+    s("fat-mes", UTIL.formatarMoeda(this.faturamentoMes()));
+    s("fat-ano", UTIL.formatarMoeda(this.faturamentoAno()));
+    s("tot-pedidos", this.totalPedidos());
+    this.renderizarAlertas();
+    this.renderizarMaisPedidos();
+    this.renderizarResumoEstoque();
+  },
+  renderizarAlertas() {
+    const el = document.getElementById("lista-estoque-baixo");
+    if (!el) return;
+    const lista = PRODUTOS.comEstoqueBaixo(5);
+    el.innerHTML = lista.length
+      ? lista.map(p => `<div class="alerta-item">
+          <span>⚠️ ${UTIL.sanitize(p.nome)}</span>
+          <span class="badge-danger">${p.estoque} ${p.unidade || "un"}</span>
+        </div>`).join("")
+      : `<p class="sem-dados">Nenhum alerta de estoque.</p>`;
+
+    const venc = document.getElementById("lista-vencendo");
+    if (venc) {
+      const lv = PRODUTOS.vencendo();
+      venc.innerHTML = lv.length
+        ? lv.map(p => `<div class="alerta-item">
+            <span>⏰ ${UTIL.sanitize(p.nome)}</span>
+            <span class="badge-warning">${p.validade}</span>
+          </div>`).join("")
+        : `<p class="sem-dados">Nenhum produto vencendo.</p>`;
+    }
+  },
+  renderizarMaisPedidos() {
+    const el = document.getElementById("lista-mais-pedidos");
+    if (!el) return;
+    const lista = PRODUTOS.maisPedidos().filter(p => p.vendas > 0);
+    el.innerHTML = lista.length
+      ? lista.map((p, i) => `<div class="rank-item">
+          <span class="rank-num">${i + 1}°</span>
+          <span>${UTIL.sanitize(p.nome)}</span>
+          <span class="badge-primary">${p.vendas}x</span>
+        </div>`).join("")
+      : `<p class="sem-dados">Nenhuma venda ainda.</p>`;
+  },
+  renderizarResumoEstoque() {
+    const el = document.getElementById("dash-resumo-estoque");
+    if (!el) return;
+    const total = STATE.get("produtos").length;
+    const baixo = PRODUTOS.comEstoqueBaixo(5).length;
+    el.innerHTML = `
+      <div class="dash-stat"><span>${total}</span><small>Total Produtos</small></div>
+      <div class="dash-stat"><span style="color:var(--warning)">${baixo}</span><small>Estoque Baixo</small></div>
+    `;
+  },
 };
+
+// Reatividade automática do dashboard
+STATE.on("pedidos", () => {
+  if (document.getElementById("sec-dashboard")?.classList.contains("ativo")) {
+    DASHBOARD.atualizar();
+  }
+  // Atualizar aba de pedidos se estiver visível
+  const pane = document.getElementById("tab-pedidos-recebidos") || document.getElementById("tab-historico-pedidos");
+  if (pane?.classList.contains("ativo")) renderizarAdmPedidos();
+});
+
+STATE.on("produtos", () => {
+  if (document.getElementById("sec-dashboard")?.classList.contains("ativo")) {
+    DASHBOARD.atualizar();
+  }
+});
 
 // ============================================================
 // DADOS INICIAIS DE DEMONSTRAÇÃO
 // ============================================================
 function carregarDadosDemo() {
-  if (STATE.categorias.length > 0) return;
+  if (STATE.get("categorias").length > 0) return;
   const cats = [
     { nome: "Açaí", emoji: "🍇", cor: "#7B2FBE" },
     { nome: "Sorvete", emoji: "🍦", cor: "#E91E8C" },
@@ -557,20 +786,22 @@ function carregarDadosDemo() {
     { nome: "Mel", preco: 2.50, estoque: 40 },
   ];
   comps.forEach(c => COMPLEMENTOS.criar(c));
+
+  const categorias = STATE.get("categorias");
   const prods = [
-    { nome: "Açaí Tradicional", descricao: "Açaí cremoso batido na hora", categoria: STATE.categorias[0]?.id, preco: 18.00, unidade: "un", tamanhos: ["300ml", "500ml", "700ml"], estoque: 100, imagem: "", temComplementos: true },
-    { nome: "Açaí Premium", descricao: "Açaí com frutas e complementos especiais", categoria: STATE.categorias[0]?.id, preco: 25.00, unidade: "un", tamanhos: ["400ml", "700ml", "1L"], estoque: 80, imagem: "", temComplementos: true },
-    { nome: "Sorvete Napolitano", descricao: "Creme, chocolate e morango", categoria: STATE.categorias[1]?.id, preco: 12.00, unidade: "un", tamanhos: ["P", "M", "G"], estoque: 50, imagem: "", temComplementos: false },
-    { nome: "Café Especial", descricao: "Grãos selecionados, sabor intenso", categoria: STATE.categorias[2]?.id, preco: 8.00, unidade: "un", tamanhos: [], estoque: 200, imagem: "", temComplementos: false },
-    { nome: "Maçã Fuji", descricao: "Maçã importada super doce", categoria: STATE.categorias[3]?.id, preco: 4.50, unidade: "kg", tamanhos: [], estoque: 30, imagem: "", temComplementos: false },
-    { nome: "Suco de Laranja", descricao: "100% natural, espremido na hora", categoria: STATE.categorias[4]?.id, preco: 10.00, unidade: "un", tamanhos: ["300ml", "500ml"], estoque: 60, imagem: "", temComplementos: false },
-    { nome: "Alface Crespa", descricao: "Fresca, sem agrotóxicos", categoria: STATE.categorias[5]?.id, preco: 3.50, unidade: "un", tamanhos: [], estoque: 40, imagem: "", temComplementos: false },
+    { nome: "Açaí Tradicional", descricao: "Açaí cremoso batido na hora", categoria: categorias[0]?.id, preco: 18.00, unidade: "un", tamanhos: ["300ml", "500ml", "700ml"], estoque: 100, imagem: "", temComplementos: true },
+    { nome: "Açaí Premium", descricao: "Açaí com frutas e complementos especiais", categoria: categorias[0]?.id, preco: 25.00, unidade: "un", tamanhos: ["400ml", "700ml", "1L"], estoque: 80, imagem: "", temComplementos: true },
+    { nome: "Sorvete Napolitano", descricao: "Creme, chocolate e morango", categoria: categorias[1]?.id, preco: 12.00, unidade: "un", tamanhos: ["P", "M", "G"], estoque: 50, imagem: "", temComplementos: false },
+    { nome: "Café Especial", descricao: "Grãos selecionados, sabor intenso", categoria: categorias[2]?.id, preco: 8.00, unidade: "un", tamanhos: [], estoque: 200, imagem: "", temComplementos: false },
+    { nome: "Maçã Fuji", descricao: "Maçã importada super doce", categoria: categorias[3]?.id, preco: 4.50, unidade: "kg", tamanhos: [], estoque: 30, imagem: "", temComplementos: false },
+    { nome: "Suco de Laranja", descricao: "100% natural, espremido na hora", categoria: categorias[4]?.id, preco: 10.00, unidade: "un", tamanhos: ["300ml", "500ml"], estoque: 60, imagem: "", temComplementos: false },
+    { nome: "Alface Crespa", descricao: "Fresca, sem agrotóxicos", categoria: categorias[5]?.id, preco: 3.50, unidade: "un", tamanhos: [], estoque: 40, imagem: "", temComplementos: false },
   ];
   prods.forEach(p => PRODUTOS.criar(p));
 }
 
 // ============================================================
-// FUNÇÕES GLOBAIS DE UI
+// FUNÇÕES GLOBAIS DE UI — CARRINHO
 // ============================================================
 function abrirCarrinho() {
   const panel = document.getElementById("carrinho-panel");
@@ -579,7 +810,6 @@ function abrirCarrinho() {
 function fecharCarrinho() {
   document.getElementById("carrinho-panel")?.classList.remove("open");
 }
-
 window.abrirCarrinho = abrirCarrinho;
 window.fecharCarrinho = fecharCarrinho;
 
@@ -587,7 +817,7 @@ window.fecharCarrinho = fecharCarrinho;
 // MODAL DE PRODUTO (CLIENTE)
 // ============================================================
 function abrirModalProduto(produtoId) {
-  const produto = STATE.produtos.find(p => p.id === produtoId);
+  const produto = STATE.get("produtos").find(p => p.id === produtoId);
   if (!produto || !produto.ativo) return;
   document.getElementById("produto-modal-overlay")?.remove();
   const complementosDisponiveis = produto.temComplementos ? COMPLEMENTOS.ativos() : [];
@@ -598,14 +828,16 @@ function abrirModalProduto(produtoId) {
   overlay.innerHTML = `
     <div class="produto-modal">
       <button class="produto-modal-close" onclick="document.getElementById('produto-modal-overlay').remove()">✕</button>
-      ${produto.imagem ? `<div class="pm-img"><img src="${UTIL.sanitize(produto.imagem)}" alt="${UTIL.sanitize(produto.nome)}"></div>` : `<div class="pm-img pm-emoji">${produto.emoji || "🛍️"}</div>`}
+      ${produto.imagem
+        ? `<div class="pm-img"><img src="${UTIL.sanitize(produto.imagem)}" alt="${UTIL.sanitize(produto.nome)}"></div>`
+        : `<div class="pm-img" style="display:flex;align-items:center;justify-content:center;"><span style="font-size:64px">${produto.emoji || "🛍️"}</span></div>`}
       <div class="pm-body">
         <h2>${UTIL.sanitize(produto.nome)}</h2>
         <p class="pm-desc">${UTIL.sanitize(produto.descricao || "")}</p>
         <div class="pm-preco">${UTIL.formatarMoeda(produto.preco)}<small>/${produto.unidade || "un"}</small></div>
         ${tamanhos.length ? `<div class="pm-secao"><label>Tamanho:</label><div class="pm-tamanhos">${tamanhos.map(t => `<label class="tag-radio"><input type="radio" name="pm-tamanho" value="${t}"><span>${t}</span></label>`).join("")}</div></div>` : ""}
         ${complementosDisponiveis.length ? `<div class="pm-secao"><label>Complementos:</label><div class="pm-complementos">${complementosDisponiveis.map(c => `<label class="tag-check"><input type="checkbox" name="pm-comp" value="${c.id}" data-nome="${c.nome}" data-preco="${c.preco || 0}"><span>${c.nome}${c.preco ? ` (+${UTIL.formatarMoeda(c.preco)})` : ""}</span></label>`).join("")}</div></div>` : ""}
-        <div class="pm-secao"><label>Observação:</label><textarea id="pm-obs" placeholder="Ex: sem açúcar, capricha no granola..." rows="2"></textarea></div>
+        <div class="pm-secao"><label>Observação:</label><textarea id="pm-obs" placeholder="Ex: sem açúcar..." rows="2"></textarea></div>
         <div class="pm-qtd-row">
           <div class="pm-qtd">
             <button onclick="pmQtd(-1)">−</button>
@@ -628,11 +860,12 @@ function pmQtd(d) {
 window.pmQtd = pmQtd;
 
 function pmAdicionarCarrinho(produtoId) {
-  const produto = STATE.produtos.find(p => p.id === produtoId);
+  const produto = STATE.get("produtos").find(p => p.id === produtoId);
   if (!produto) return;
   const qtd = parseInt(document.getElementById("pm-qtd-val")?.textContent) || 1;
   const tamanho = document.querySelector('input[name="pm-tamanho"]:checked')?.value || "";
-  const comps = [...document.querySelectorAll('input[name="pm-comp"]:checked')].map(el => ({ id: el.value, nome: el.dataset.nome, preco: parseFloat(el.dataset.preco) || 0 }));
+  const comps = [...document.querySelectorAll('input[name="pm-comp"]:checked')]
+    .map(el => ({ id: el.value, nome: el.dataset.nome, preco: parseFloat(el.dataset.preco) || 0 }));
   const obs = document.getElementById("pm-obs")?.value || "";
   CARRINHO.adicionar(produto, qtd, tamanho, comps, obs);
   document.getElementById("produto-modal-overlay")?.remove();
@@ -640,7 +873,7 @@ function pmAdicionarCarrinho(produtoId) {
 window.pmAdicionarCarrinho = pmAdicionarCarrinho;
 
 // ============================================================
-// RENDERIZAÇÃO DO CATÁLOGO (index.html)
+// RENDERIZAÇÃO DO CATÁLOGO
 // ============================================================
 function renderizarCatalogo() {
   aplicarConfigUI();
@@ -654,12 +887,18 @@ function aplicarConfigUI() {
   const nome = document.getElementById("loja-nome");
   const slogan = document.getElementById("loja-slogan");
   const logo = document.getElementById("loja-logo");
-  const banner = document.getElementById("loja-banner");
   if (nome) nome.textContent = CONFIG.loja.nome;
   if (slogan) slogan.textContent = CONFIG.loja.slogan;
-  if (logo) logo.textContent = CONFIG.loja.logoUrl ? "" : CONFIG.loja.logo;
-  if (logo && CONFIG.loja.logoUrl) { const img = document.createElement("img"); img.src = CONFIG.loja.logoUrl; img.alt = "Logo"; logo.appendChild(img); }
-  if (banner) { banner.style.backgroundImage = `url('${CONFIG.loja.banner}')`; }
+  if (logo) {
+    logo.innerHTML = "";
+    if (CONFIG.loja.logoUrl) {
+      const img = document.createElement("img");
+      img.src = CONFIG.loja.logoUrl; img.alt = "Logo";
+      logo.appendChild(img);
+    } else {
+      logo.textContent = CONFIG.loja.logo;
+    }
+  }
   document.title = CONFIG.loja.nome;
   const wppFloat = document.getElementById("wpp-float");
   if (wppFloat) wppFloat.href = `https://wa.me/${CONFIG.contato.whatsapp}`;
@@ -669,13 +908,14 @@ function renderizarCategorias() {
   const container = document.getElementById("categorias-filtro");
   if (!container) return;
   const cats = CATEGORIAS.ativas();
-  container.innerHTML = `<button class="cat-btn ${STATE.categoriaFiltro === 'todos' ? 'ativo' : ''}" onclick="filtrarCategoria('todos')">🛒 Todos</button>` +
-    cats.map(c => `<button class="cat-btn ${STATE.categoriaFiltro === c.id ? 'ativo' : ''}" onclick="filtrarCategoria('${c.id}')" style="--cat-cor:${c.cor || 'var(--primary)'}">
+  const filtro = STATE.get("categoriaFiltro");
+  container.innerHTML = `<button class="cat-btn ${filtro === 'todos' ? 'ativo' : ''}" onclick="filtrarCategoria('todos')">🛒 Todos</button>` +
+    cats.map(c => `<button class="cat-btn ${filtro === c.id ? 'ativo' : ''}" onclick="filtrarCategoria('${c.id}')" style="--cat-cor:${c.cor || 'var(--primary)'}">
       ${c.emoji || ""} ${UTIL.sanitize(c.nome)}</button>`).join("");
 }
 
 function filtrarCategoria(id) {
-  STATE.categoriaFiltro = id;
+  STATE.set("categoriaFiltro", id);
   renderizarCategorias();
   renderizarProdutos();
 }
@@ -684,15 +924,18 @@ window.filtrarCategoria = filtrarCategoria;
 function renderizarProdutos() {
   const container = document.getElementById("produtos-grid");
   if (!container) return;
-  const lista = PRODUTOS.filtrar(STATE.buscaTermo, STATE.categoriaFiltro).filter(p => p.ativo);
-  // Agrupar por categoria
-  const cats = STATE.categoriaFiltro === "todos" ? CATEGORIAS.ativas() : CATEGORIAS.ativas().filter(c => c.id === STATE.categoriaFiltro);
+  const lista = PRODUTOS.filtrar(STATE.get("buscaTermo"), STATE.get("categoriaFiltro")).filter(p => p.ativo);
+  const cats = STATE.get("categoriaFiltro") === "todos"
+    ? CATEGORIAS.ativas()
+    : CATEGORIAS.ativas().filter(c => c.id === STATE.get("categoriaFiltro"));
+
   if (lista.length === 0) {
     container.innerHTML = `<div class="sem-produtos"><span>🔍</span><p>${ENUMS.MSGS.SEM_PRODUTOS}</p></div>`;
     return;
   }
+
   let html = "";
-  if (STATE.categoriaFiltro === "todos") {
+  if (STATE.get("categoriaFiltro") === "todos") {
     cats.forEach(cat => {
       const prods = lista.filter(p => p.categoria === cat.id);
       if (prods.length === 0) return;
@@ -704,7 +947,6 @@ function renderizarProdutos() {
         <div class="produtos-row">${prods.map(p => cardProduto(p)).join("")}</div>
       </div>`;
     });
-    // Produtos sem categoria
     const semCat = lista.filter(p => !cats.find(c => c.id === p.categoria));
     if (semCat.length) html += `<div class="produtos-row">${semCat.map(p => cardProduto(p)).join("")}</div>`;
   } else {
@@ -715,7 +957,9 @@ function renderizarProdutos() {
 
 function cardProduto(p) {
   return `<div class="produto-card" onclick="abrirModalProduto('${p.id}')">
-    <div class="pc-img">${p.imagem ? `<img src="${UTIL.sanitize(p.imagem)}" alt="${UTIL.sanitize(p.nome)}" loading="lazy">` : `<span class="pc-emoji">${p.emoji || "🛍️"}</span>`}</div>
+    <div class="pc-img">${p.imagem
+      ? `<img src="${UTIL.sanitize(p.imagem)}" alt="${UTIL.sanitize(p.nome)}" loading="lazy">`
+      : `<span class="pc-emoji">${p.emoji || "🛍️"}</span>`}</div>
     <div class="pc-body">
       <h3>${UTIL.sanitize(p.nome)}</h3>
       ${p.descricao ? `<p>${UTIL.sanitize(p.descricao)}</p>` : ""}
@@ -728,72 +972,38 @@ function cardProduto(p) {
 }
 
 function buscarProdutos(termo) {
-  STATE.buscaTermo = termo;
+  STATE.set("buscaTermo", termo);
   renderizarProdutos();
 }
 window.buscarProdutos = buscarProdutos;
 
 // ============================================================
-// ADMIN RENDER FUNCTIONS
+// ADMIN — Funções de renderização
 // ============================================================
 function renderizarAdmin() {
   UTIL.aplicarCores();
-  aplicarConfigAdmin();
-  renderizarDashboard();
-}
-
-function aplicarConfigAdmin() {
-  document.title = `Admin — ${CONFIG.loja.nome}`;
   const el = document.getElementById("adm-loja-nome");
   if (el) el.textContent = CONFIG.loja.nome;
+  document.title = `Admin — ${CONFIG.loja.nome}`;
+  DASHBOARD.atualizar();
 }
 
-function renderizarDashboard() {
-  const fatDia = document.getElementById("fat-dia");
-  const fatMes = document.getElementById("fat-mes");
-  const fatAno = document.getElementById("fat-ano");
-  const totPed = document.getElementById("tot-pedidos");
-  if (fatDia) fatDia.textContent = UTIL.formatarMoeda(DASHBOARD.faturamentoDia());
-  if (fatMes) fatMes.textContent = UTIL.formatarMoeda(DASHBOARD.faturamentoMes());
-  if (fatAno) fatAno.textContent = UTIL.formatarMoeda(DASHBOARD.faturamentoAno());
-  if (totPed) totPed.textContent = DASHBOARD.totalPedidos();
-  renderizarAlertasBaixoEstoque();
-  renderizarMaisPedidos();
-}
-
-function renderizarAlertasBaixoEstoque() {
-  const el = document.getElementById("lista-estoque-baixo");
-  if (!el) return;
-  const lista = PRODUTOS.comEstoqueBaixo(5);
-  el.innerHTML = lista.length ? lista.map(p => `<div class="alerta-item"><span>⚠️ ${UTIL.sanitize(p.nome)}</span><span class="badge-danger">${p.estoque} ${p.unidade || "un"}</span></div>`).join("") : `<p class="sem-dados">Nenhum produto com estoque baixo.</p>`;
-  const venc = document.getElementById("lista-vencendo");
-  if (venc) {
-    const lv = PRODUTOS.vencendo();
-    venc.innerHTML = lv.length ? lv.map(p => `<div class="alerta-item"><span>⏰ ${UTIL.sanitize(p.nome)}</span><span class="badge-warning">${p.validade}</span></div>`).join("") : `<p class="sem-dados">Nenhum produto vencendo.</p>`;
-  }
-}
-
-function renderizarMaisPedidos() {
-  const el = document.getElementById("lista-mais-pedidos");
-  if (!el) return;
-  const lista = PRODUTOS.maisPedidos();
-  el.innerHTML = lista.filter(p => p.vendas > 0).length
-    ? lista.filter(p => p.vendas > 0).map((p, i) => `<div class="rank-item"><span class="rank-num">${i + 1}°</span><span>${UTIL.sanitize(p.nome)}</span><span class="badge-primary">${p.vendas}x</span></div>`).join("")
-    : `<p class="sem-dados">Nenhuma venda ainda.</p>`;
-}
-
-// ADMIN — Produtos
 function renderizarAdmProdutos() {
   const container = document.getElementById("adm-produtos-lista");
   if (!container) return;
-  const lista = STATE.produtos;
-  if (lista.length === 0) { container.innerHTML = `<p class="sem-dados">Nenhum produto cadastrado.</p>`; return; }
+  const lista = STATE.get("produtos");
+  if (lista.length === 0) {
+    container.innerHTML = `<p class="sem-dados">Nenhum produto cadastrado.</p>`;
+    return;
+  }
   container.innerHTML = lista.map(p => `
     <div class="adm-item ${p.ativo ? "" : "pausado"}">
-      <div class="adm-item-img">${p.imagem ? `<img src="${UTIL.sanitize(p.imagem)}" alt="">` : `<span>${p.emoji || "🛍️"}</span>`}</div>
+      <div class="adm-item-img">${p.imagem
+        ? `<img src="${UTIL.sanitize(p.imagem)}" alt="">`
+        : `<span>${p.emoji || "🛍️"}</span>`}</div>
       <div class="adm-item-info">
         <strong>${UTIL.sanitize(p.nome)}</strong>
-        <small>${UTIL.formatarMoeda(p.preco)} / ${p.unidade || "un"} | Estoque: ${p.estoque ?? "—"} | Vendas: ${p.vendas || 0}</small>
+        <small>${UTIL.formatarMoeda(p.preco)} / ${p.unidade || "un"} | Estoque: ${p.estoque ?? "∞"} | Vendas: ${p.vendas || 0}</small>
         ${!p.ativo ? `<span class="badge-warning">Pausado</span>` : ""}
       </div>
       <div class="adm-item-acoes">
@@ -824,21 +1034,65 @@ function excluirProduto(id) {
 window.excluirProduto = excluirProduto;
 
 function editarProduto(id) {
-  const p = STATE.produtos.find(x => x.id === id);
+  const p = STATE.get("produtos").find(x => x.id === id);
   if (!p) return;
   preencherFormProduto(p);
-  mostrarSecao("sec-produtos");
+  TABS.ir("sec-produtos", "tab-novo-produto");
   document.getElementById("form-produto-titulo").textContent = "Editar Produto";
   document.getElementById("form-produto-id").value = id;
 }
 window.editarProduto = editarProduto;
 
+// Controle de estoque — tab dentro de categorias
+function renderizarControleEstoque() {
+  const container = document.getElementById("tab-controle-estoque");
+  if (!container) return;
+  const lista = STATE.get("produtos");
+  if (lista.length === 0) {
+    container.innerHTML = `<p class="sem-dados">Nenhum produto cadastrado.</p>`;
+    return;
+  }
+  container.innerHTML = `
+    <div class="form-card">
+      <div class="form-card-titulo">📦 Controle de Estoque</div>
+      <div id="estoque-lista">
+        ${lista.map(p => `
+          <div class="adm-item">
+            <div class="adm-item-img">${p.imagem ? `<img src="${UTIL.sanitize(p.imagem)}" alt="">` : `<span>${p.emoji || "🛍️"}</span>`}</div>
+            <div class="adm-item-info">
+              <strong>${UTIL.sanitize(p.nome)}</strong>
+              <small>Estoque atual: <strong>${p.estoque ?? "∞"}</strong> ${p.unidade || "un"} | Vendas: ${p.vendas || 0}</small>
+              ${(p.estoque !== undefined && p.estoque !== "" && Number(p.estoque) <= 5)
+                ? `<span class="badge-danger">⚠️ Estoque Baixo</span>` : ""}
+            </div>
+            <div class="adm-item-acoes" style="align-items:center; gap:8px;">
+              <input type="number" min="0" value="${p.estoque ?? ''}" placeholder="∞"
+                style="width:80px; text-align:center;"
+                onchange="atualizarEstoque('${p.id}', this.value)">
+              <span style="font-size:12px; color:var(--text-muted)">${p.unidade || "un"}</span>
+            </div>
+          </div>`).join("")}
+      </div>
+    </div>`;
+}
+window.renderizarControleEstoque = renderizarControleEstoque;
+
+function atualizarEstoque(id, valor) {
+  PRODUTOS.editar(id, { estoque: valor === "" ? "" : parseInt(valor) });
+  MODAL.toast("Estoque atualizado!");
+  DASHBOARD.atualizar();
+}
+window.atualizarEstoque = atualizarEstoque;
+
 // ADMIN — Categorias
 function renderizarAdmCategorias() {
   const container = document.getElementById("adm-categorias-lista");
   if (!container) return;
-  const lista = STATE.categorias;
-  if (lista.length === 0) { container.innerHTML = `<p class="sem-dados">Nenhuma categoria cadastrada.</p>`; return; }
+  const lista = STATE.get("categorias");
+  if (lista.length === 0) {
+    container.innerHTML = `<p class="sem-dados">Nenhuma categoria cadastrada.</p>`;
+    return;
+  }
   container.innerHTML = lista.map(c => `
     <div class="adm-item ${c.ativo ? "" : "pausado"}" draggable="true" data-id="${c.id}">
       <span class="drag-handle">⠿</span>
@@ -857,7 +1111,11 @@ function renderizarAdmCategorias() {
 }
 window.renderizarAdmCategorias = renderizarAdmCategorias;
 
-function pausarCategoria(id) { CATEGORIAS.pausar(id); renderizarAdmCategorias(); MODAL.toast("Categoria atualizada."); }
+function pausarCategoria(id) {
+  CATEGORIAS.pausar(id);
+  renderizarAdmCategorias();
+  MODAL.toast("Categoria atualizada.");
+}
 window.pausarCategoria = pausarCategoria;
 
 function excluirCategoria(id) {
@@ -872,7 +1130,7 @@ function excluirCategoria(id) {
 window.excluirCategoria = excluirCategoria;
 
 function editarCategoria(id) {
-  const c = STATE.categorias.find(x => x.id === id);
+  const c = STATE.get("categorias").find(x => x.id === id);
   if (!c) return;
   document.getElementById("cat-id").value = id;
   document.getElementById("cat-nome").value = c.nome;
@@ -880,6 +1138,7 @@ function editarCategoria(id) {
   document.getElementById("cat-cor").value = c.cor || "#7B2FBE";
   document.getElementById("cat-frase").value = c.frase || "";
   document.getElementById("form-cat-titulo").textContent = "Editar Categoria";
+  TABS.ir("sec-categorias", "tab-nova-categoria");
 }
 window.editarCategoria = editarCategoria;
 
@@ -887,8 +1146,11 @@ window.editarCategoria = editarCategoria;
 function renderizarAdmComplementos() {
   const container = document.getElementById("adm-complementos-lista");
   if (!container) return;
-  const lista = STATE.complementos;
-  if (lista.length === 0) { container.innerHTML = `<p class="sem-dados">Nenhum complemento cadastrado.</p>`; return; }
+  const lista = STATE.get("complementos");
+  if (lista.length === 0) {
+    container.innerHTML = `<p class="sem-dados">Nenhum complemento cadastrado.</p>`;
+    return;
+  }
   container.innerHTML = lista.map(c => `
     <div class="adm-item ${c.ativo ? "" : "pausado"}">
       <div class="adm-item-info">
@@ -905,34 +1167,114 @@ function renderizarAdmComplementos() {
 }
 window.renderizarAdmComplementos = renderizarAdmComplementos;
 
-function pausarComplemento(id) { COMPLEMENTOS.pausar(id); renderizarAdmComplementos(); MODAL.toast("Complemento atualizado."); }
+function pausarComplemento(id) {
+  COMPLEMENTOS.pausar(id);
+  renderizarAdmComplementos();
+  MODAL.toast("Complemento atualizado.");
+}
 window.pausarComplemento = pausarComplemento;
+
 function excluirComplemento(id) {
   MODAL.pedirSenha("Excluir Complemento", () => {
-    MODAL.confirmar(ENUMS.MSGS.CONFIRMAR_EXCLUSAO, () => { COMPLEMENTOS.excluir(id); renderizarAdmComplementos(); MODAL.toast("Complemento excluído!"); });
+    MODAL.confirmar(ENUMS.MSGS.CONFIRMAR_EXCLUSAO, () => {
+      COMPLEMENTOS.excluir(id);
+      renderizarAdmComplementos();
+      MODAL.toast("Complemento excluído!");
+    });
   });
 }
 window.excluirComplemento = excluirComplemento;
+
 function editarComplemento(id) {
-  const c = STATE.complementos.find(x => x.id === id);
+  const c = STATE.get("complementos").find(x => x.id === id);
   if (!c) return;
   document.getElementById("comp-id").value = id;
   document.getElementById("comp-nome").value = c.nome;
   document.getElementById("comp-preco").value = c.preco || 0;
   document.getElementById("comp-estoque").value = c.estoque ?? "";
   document.getElementById("form-comp-titulo").textContent = "Editar Complemento";
+  TABS.ir("sec-complementos", "tab-novo-complemento");
 }
 window.editarComplemento = editarComplemento;
 
-// DRAG AND DROP para categorias
+// ADMIN — Pedidos
+function renderizarAdmPedidos() {
+  // Pedidos Recebidos (pendentes/ativos)
+  const activeContainer = document.getElementById("pedidos-recebidos-lista");
+  // Histórico (todos)
+  const histContainer = document.getElementById("pedidos-historico-lista");
+
+  const pedidos = [...STATE.get("pedidos")].reverse();
+  const ativos = pedidos.filter(p => p.status !== ENUMS.STATUS_PEDIDO.CANCELADO && p.status !== ENUMS.STATUS_PEDIDO.ENTREGUE);
+  const historico = pedidos;
+
+  const renderPedido = (p, showStatus = false) => `
+    <div class="pedido-card">
+      <div class="pedido-header">
+        <div>
+          <strong>${UTIL.sanitize(p.cliente?.nome || "—")}</strong>
+          <small style="color:var(--text-muted); display:block;">${UTIL.formatarData(p.data)}</small>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span class="badge-${p.status === 'cancelado' ? 'danger' : p.status === 'entregue' ? 'success' : 'warning'}">${p.status}</span>
+          <button class="btn-icon btn-icon-del" title="Excluir pedido e estornar estoque"
+            onclick="confirmarExcluirPedido('${p.id}')">🗑️</button>
+        </div>
+      </div>
+      <div class="pedido-itens">
+        ${(p.itens || []).map(i => `<small>• ${i.quantidade}x ${UTIL.sanitize(i.nome)}${i.tamanho ? ` (${i.tamanho})` : ""}</small>`).join("")}
+      </div>
+      <div class="pedido-footer">
+        <span>${p.tipoEntrega === "entrega" ? "🚚 Entrega" : "🏪 Retirada"} | ${p.formaPagamento || "—"}</span>
+        <strong>${UTIL.formatarMoeda(p.total)}</strong>
+      </div>
+      ${p.tipoEntrega === "entrega" && p.endereco ? `<div style="font-size:12px;color:var(--text-muted);margin-top:6px;">📍 ${UTIL.sanitize(p.endereco)}</div>` : ""}
+    </div>`;
+
+  if (activeContainer) {
+    activeContainer.innerHTML = ativos.length
+      ? ativos.map(p => renderPedido(p)).join("")
+      : `<p class="sem-dados">Nenhum pedido recebido.</p>`;
+  }
+
+  if (histContainer) {
+    histContainer.innerHTML = historico.length
+      ? historico.map(p => renderPedido(p, true)).join("")
+      : `<p class="sem-dados">Nenhum pedido no histórico.</p>`;
+  }
+}
+
+function confirmarExcluirPedido(id) {
+  MODAL.pedirSenha("Excluir Pedido", () => {
+    MODAL.confirmar("Excluir este pedido? O estoque será revertido automaticamente e o faturamento será atualizado.", () => {
+      PEDIDOS.excluir(id);
+      renderizarAdmPedidos();
+      DASHBOARD.atualizar();
+      MODAL.toast(ENUMS.MSGS.PEDIDO_EXCLUIDO, "sucesso");
+    });
+  });
+}
+window.confirmarExcluirPedido = confirmarExcluirPedido;
+
+// Drag and drop categorias
 function iniciarDragDrop() {
   const lista = document.getElementById("adm-categorias-lista");
   if (!lista) return;
   let dragEl = null;
   lista.querySelectorAll("[draggable]").forEach(el => {
     el.addEventListener("dragstart", () => { dragEl = el; el.style.opacity = "0.5"; });
-    el.addEventListener("dragend", () => { el.style.opacity = ""; dragEl = null; salvarOrdemCategorias(); });
-    el.addEventListener("dragover", e => { e.preventDefault(); if (dragEl && el !== dragEl) { const r = el.getBoundingClientRect(); e.clientY < r.top + r.height / 2 ? lista.insertBefore(dragEl, el) : el.after(dragEl); } });
+    el.addEventListener("dragend", () => {
+      el.style.opacity = "";
+      dragEl = null;
+      salvarOrdemCategorias();
+    });
+    el.addEventListener("dragover", e => {
+      e.preventDefault();
+      if (dragEl && el !== dragEl) {
+        const r = el.getBoundingClientRect();
+        e.clientY < r.top + r.height / 2 ? lista.insertBefore(dragEl, el) : el.after(dragEl);
+      }
+    });
   });
 }
 
@@ -947,84 +1289,101 @@ function mostrarSecao(id) {
   document.getElementById(id)?.classList.add("ativo");
   document.querySelectorAll(".adm-nav-btn").forEach(b => b.classList.remove("ativo"));
   document.querySelector(`[data-sec="${id}"]`)?.classList.add("ativo");
-  if (id === "sec-dashboard") renderizarDashboard();
-  if (id === "sec-produtos") { renderizarAdmProdutos(); popularSelectCategorias(); popularComplementosProd(); }
-  if (id === "sec-categorias") renderizarAdmCategorias();
-  if (id === "sec-complementos") renderizarAdmComplementos();
-  if (id === "sec-pedidos") renderizarAdmPedidos();
-  if (id === "sec-config") preencherFormConfig();
+
+  // Atualizar título topbar
+  const tituloMap = {
+    "sec-dashboard": "📊 Dashboard",
+    "sec-produtos": "📦 Produtos",
+    "sec-categorias": "🏷️ Categorias",
+    "sec-complementos": "✨ Acompanhamentos",
+    "sec-pedidos": "📋 Pedidos",
+    "sec-config": "⚙️ Configurações",
+  };
+  const tt = document.getElementById("topbar-titulo");
+  if (tt) tt.textContent = tituloMap[id] || "Admin";
+
+  if (id === "sec-dashboard") DASHBOARD.atualizar();
 }
 window.mostrarSecao = mostrarSecao;
+
+// Escuta mudanças de tab para renderizar conteúdo
+document.addEventListener("tabchange", (e) => {
+  const { tab, secao } = e.detail;
+  if (secao === "sec-produtos") {
+    if (tab === "tab-produtos-lista") { renderizarAdmProdutos(); popularSelectCategorias(); }
+    if (tab === "tab-novo-produto") { popularSelectCategorias(); popularComplementosProd(); }
+  }
+  if (secao === "sec-categorias") {
+    if (tab === "tab-categorias-lista") renderizarAdmCategorias();
+    if (tab === "tab-controle-estoque") renderizarControleEstoque();
+  }
+  if (secao === "sec-complementos") {
+    if (tab === "tab-complementos-lista") renderizarAdmComplementos();
+  }
+  if (secao === "sec-pedidos") {
+    renderizarAdmPedidos();
+  }
+  if (secao === "sec-config") {
+    preencherFormConfig();
+  }
+});
 
 function popularSelectCategorias() {
   const sel = document.getElementById("prod-categoria");
   if (!sel) return;
-  sel.innerHTML = `<option value="">Selecione...</option>` + STATE.categorias.map(c => `<option value="${c.id}">${c.emoji || ""} ${c.nome}</option>`).join("");
+  sel.innerHTML = `<option value="">Selecione...</option>` +
+    STATE.get("categorias").map(c => `<option value="${c.id}">${c.emoji || ""} ${c.nome}</option>`).join("");
 }
 
 function popularComplementosProd() {
   const container = document.getElementById("prod-complementos-lista");
   if (!container) return;
-  container.innerHTML = COMPLEMENTOS.ativos().map(c => `<label class="tag-check"><input type="checkbox" name="prod-comp" value="${c.id}"><span>${c.nome}</span></label>`).join("");
+  container.innerHTML = COMPLEMENTOS.ativos()
+    .map(c => `<label class="tag-check"><input type="checkbox" name="prod-comp" value="${c.id}"><span>${c.nome}</span></label>`)
+    .join("");
 }
 
 function preencherFormProduto(p) {
-  document.getElementById("prod-nome").value = p.nome || "";
-  document.getElementById("prod-descricao").value = p.descricao || "";
-  document.getElementById("prod-imagem").value = p.imagem || "";
-  document.getElementById("prod-preco").value = p.preco || "";
-  document.getElementById("prod-unidade").value = p.unidade || "un";
-  document.getElementById("prod-estoque").value = p.estoque ?? "";
-  document.getElementById("prod-validade").value = p.validade || "";
-  document.getElementById("prod-emoji").value = p.emoji || "";
-  document.getElementById("prod-tem-complementos").checked = p.temComplementos || false;
-  document.getElementById("prod-complementos-area").style.display = p.temComplementos ? "block" : "none";
+  const s = (id, v) => { const el = document.getElementById(id); if (el) el.value = v ?? ""; };
+  s("prod-nome", p.nome); s("prod-descricao", p.descricao);
+  s("prod-imagem", p.imagem); s("prod-preco", p.preco);
+  s("prod-unidade", p.unidade || "un"); s("prod-estoque", p.estoque);
+  s("prod-validade", p.validade); s("prod-emoji", p.emoji);
+  const tc = document.getElementById("prod-tem-complementos");
+  if (tc) tc.checked = p.temComplementos || false;
+  const area = document.getElementById("prod-complementos-area");
+  if (area) area.style.display = p.temComplementos ? "block" : "none";
   popularSelectCategorias();
-  document.getElementById("prod-categoria").value = p.categoria || "";
-  // Tamanhos
+  s("prod-categoria", p.categoria);
   const tamanhosSel = document.getElementById("prod-tamanhos");
   if (tamanhosSel) {
     [...tamanhosSel.options].forEach(o => { o.selected = (p.tamanhos || []).includes(o.value); });
   }
   popularComplementosProd();
   if (p.complementosVinculados) {
-    document.querySelectorAll('input[name="prod-comp"]').forEach(cb => { cb.checked = p.complementosVinculados.includes(cb.value); });
+    document.querySelectorAll('input[name="prod-comp"]').forEach(cb => {
+      cb.checked = p.complementosVinculados.includes(cb.value);
+    });
   }
 }
 
-// ADMIN — Pedidos
-function renderizarAdmPedidos() {
-  const container = document.getElementById("adm-pedidos-lista");
-  if (!container) return;
-  const lista = [...STATE.pedidos].reverse();
-  if (lista.length === 0) { container.innerHTML = `<p class="sem-dados">Nenhum pedido ainda.</p>`; return; }
-  container.innerHTML = lista.map(p => `
-    <div class="pedido-card">
-      <div class="pedido-header">
-        <span><strong>${UTIL.sanitize(p.cliente?.nome || "—")}</strong> | ${UTIL.formatarData(p.data)}</span>
-        <span class="badge-${p.status === 'cancelado' ? 'danger' : 'success'}">${p.status}</span>
-      </div>
-      <div class="pedido-itens">${(p.itens || []).map(i => `<small>• ${i.quantidade}x ${UTIL.sanitize(i.nome)}${i.tamanho ? ` (${i.tamanho})` : ""}</small>`).join("")}</div>
-      <div class="pedido-footer">
-        <span>${p.tipoEntrega === "entrega" ? "🚚 Entrega" : "🏪 Retirada"} | ${p.formaPagamento || "—"}</span>
-        <strong>${UTIL.formatarMoeda(p.total)}</strong>
-      </div>
-    </div>`).join("");
-}
-
-// CONFIG FORM
+// CONFIG
 function preencherFormConfig() {
   const s = (id, v) => { const el = document.getElementById(id); if (el) el.value = v || ""; };
-  s("cfg-nome", CONFIG.loja.nome); s("cfg-slogan", CONFIG.loja.slogan); s("cfg-logo", CONFIG.loja.logo);
-  s("cfg-logoUrl", CONFIG.loja.logoUrl); s("cfg-banner", CONFIG.loja.banner);
+  s("cfg-nome", CONFIG.loja.nome); s("cfg-slogan", CONFIG.loja.slogan);
+  s("cfg-logo", CONFIG.loja.logo); s("cfg-logoUrl", CONFIG.loja.logoUrl);
+  s("cfg-banner", CONFIG.loja.banner);
   s("cfg-cor-primary", CONFIG.loja.corPrimaria); s("cfg-cor-secondary", CONFIG.loja.corSecundaria);
   s("cfg-cor-bg", CONFIG.loja.corFundo); s("cfg-cor-surface", CONFIG.loja.corSuperficie);
   s("cfg-cor-text", CONFIG.loja.corTexto);
   s("cfg-wpp", CONFIG.contato.whatsapp); s("cfg-wpp-adm", CONFIG.contato.whatsappAdm);
   s("cfg-endereco", CONFIG.contato.endereco); s("cfg-cidade", CONFIG.contato.cidade);
-  s("cfg-instagram", CONFIG.contato.instagram); s("cfg-taxa", CONFIG.delivery.taxaEntrega);
-  s("cfg-pedido-min", CONFIG.delivery.pedidoMinimo); s("cfg-tempo", CONFIG.delivery.tempoEstimado);
+  s("cfg-instagram", CONFIG.contato.instagram);
+  s("cfg-taxa", CONFIG.delivery.taxaEntrega); s("cfg-pedido-min", CONFIG.delivery.pedidoMinimo);
+  s("cfg-tempo", CONFIG.delivery.tempoEstimado);
   s("cfg-senha-adm", CONFIG.senha.admin); s("cfg-senha-conf", CONFIG.senha.confirmacoes);
+  // Horários
+  renderizarHorarios();
   const entrega = document.getElementById("cfg-entrega-ativa");
   if (entrega) entrega.checked = CONFIG.delivery.entregaAtiva;
   const retirada = document.getElementById("cfg-retirada-ativa");
@@ -1032,6 +1391,39 @@ function preencherFormConfig() {
   const aberto = document.getElementById("cfg-loja-aberta");
   if (aberto) aberto.checked = CONFIG.funcionamento.aberto;
 }
+
+function renderizarHorarios() {
+  const container = document.getElementById("horarios-lista");
+  if (!container) return;
+  container.innerHTML = (CONFIG.funcionamento.horarios || []).map((h, i) => `
+    <div class="adm-item" data-index="${i}">
+      <div class="adm-item-info" style="flex:1; display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+        <input type="text" value="${h.dia}" placeholder="Dia(s)"
+          onchange="atualizarHorario(${i}, 'dia', this.value)">
+        <input type="text" value="${h.hora}" placeholder="Horário"
+          onchange="atualizarHorario(${i}, 'hora', this.value)">
+      </div>
+      <button class="btn-icon btn-icon-del" onclick="removerHorario(${i})">🗑️</button>
+    </div>`).join("") +
+    `<button class="btn btn-outline btn-sm" onclick="adicionarHorario()" style="margin-top:8px;">+ Adicionar Horário</button>`;
+}
+
+function atualizarHorario(index, campo, valor) {
+  CONFIG.funcionamento.horarios[index][campo] = valor;
+}
+window.atualizarHorario = atualizarHorario;
+
+function removerHorario(index) {
+  CONFIG.funcionamento.horarios.splice(index, 1);
+  renderizarHorarios();
+}
+window.removerHorario = removerHorario;
+
+function adicionarHorario() {
+  CONFIG.funcionamento.horarios.push({ dia: "Dia(s)", hora: "00:00 – 00:00" });
+  renderizarHorarios();
+}
+window.adicionarHorario = adicionarHorario;
 
 function salvarConfig() {
   MODAL.pedirSenha("Salvar Configurações", () => {
@@ -1051,35 +1443,39 @@ function salvarConfig() {
     CONFIG.delivery.entregaAtiva = document.getElementById("cfg-entrega-ativa")?.checked;
     CONFIG.delivery.retiradaAtiva = document.getElementById("cfg-retirada-ativa")?.checked;
     CONFIG.funcionamento.aberto = document.getElementById("cfg-loja-aberta")?.checked;
-    CONFIG.senha.admin = g("cfg-senha-adm") || CONFIG.senha.admin;
-    CONFIG.senha.confirmacoes = g("cfg-senha-conf") || CONFIG.senha.confirmacoes;
+    const novaSenhaAdm = g("cfg-senha-adm");
+    const novaSenhaConf = g("cfg-senha-conf");
+    if (novaSenhaAdm) CONFIG.senha.admin = novaSenhaAdm;
+    if (novaSenhaConf) CONFIG.senha.confirmacoes = novaSenhaConf;
     STORAGE.salvarConfig();
     UTIL.aplicarCores();
-    aplicarConfigAdmin();
+    renderizarAdmin();
     MODAL.sucesso(ENUMS.MSGS.CONFIG_SALVA);
   });
 }
 window.salvarConfig = salvarConfig;
 
-// ADMIN LOGIN
+// ADMIN — Login
 function fazerLogin() {
   const senha = document.getElementById("login-senha")?.value;
   if (senha === CONFIG.senha.admin) {
-    STATE.adminLogado = true;
+    STATE.set("adminLogado", true);
     document.getElementById("login-overlay")?.classList.remove("active");
     renderizarAdmin();
     mostrarSecao("sec-dashboard");
+    TABS.initAll();
     MODAL.toast("Bem-vindo ao painel! 👋");
   } else {
     document.getElementById("login-senha").classList.add("input-erro");
     document.getElementById("login-erro").style.display = "block";
-    MODAL.shake();
+    document.querySelector(".login-box")?.classList.add("shake");
+    setTimeout(() => document.querySelector(".login-box")?.classList.remove("shake"), 400);
   }
 }
 window.fazerLogin = fazerLogin;
 
 function fazerLogout() {
-  STATE.adminLogado = false;
+  STATE.set("adminLogado", false);
   document.getElementById("login-overlay")?.classList.add("active");
   document.getElementById("login-senha").value = "";
   document.getElementById("login-erro").style.display = "none";
@@ -1101,16 +1497,21 @@ function bindFormProduto() {
     const compsVinculados = [...document.querySelectorAll('input[name="prod-comp"]:checked')].map(el => el.value);
     const dados = {
       nome: g("prod-nome"), descricao: g("prod-descricao"), imagem: g("prod-imagem"),
-      emoji: g("prod-emoji"), categoria: g("prod-categoria"), preco: parseFloat(g("prod-preco")) || 0,
-      unidade: g("prod-unidade"), tamanhos, estoque: g("prod-estoque") !== "" ? parseInt(g("prod-estoque")) : "",
-      validade: g("prod-validade"), temComplementos: document.getElementById("prod-tem-complementos")?.checked,
+      emoji: g("prod-emoji"), categoria: g("prod-categoria"),
+      preco: parseFloat(g("prod-preco")) || 0,
+      unidade: g("prod-unidade"), tamanhos,
+      estoque: g("prod-estoque") !== "" ? parseInt(g("prod-estoque")) : "",
+      validade: g("prod-validade"),
+      temComplementos: document.getElementById("prod-tem-complementos")?.checked,
       complementosVinculados: compsVinculados,
     };
     if (!dados.nome || !dados.preco) { MODAL.erro(ENUMS.MSGS.CAMPO_OBRIGATORIO); return; }
     if (id) { PRODUTOS.editar(id, dados); } else { PRODUTOS.criar(dados); }
-    form.reset(); document.getElementById("form-produto-id").value = "";
+    form.reset();
+    document.getElementById("form-produto-id").value = "";
     document.getElementById("form-produto-titulo").textContent = "Novo Produto";
-    renderizarAdmProdutos();
+    document.getElementById("prod-complementos-area").style.display = "none";
+    TABS.ir("sec-produtos", "tab-produtos-lista");
     MODAL.sucesso(ENUMS.MSGS.PRODUTO_SALVO);
   });
   document.getElementById("prod-tem-complementos")?.addEventListener("change", e => {
@@ -1127,12 +1528,17 @@ function bindFormCategoria() {
     const id = g("cat-id");
     const nome = g("cat-nome");
     if (!nome) { MODAL.erro(ENUMS.MSGS.CAMPO_OBRIGATORIO); return; }
-    const dados = { nome, emoji: g("cat-emoji"), cor: document.getElementById("cat-cor")?.value || "#7B2FBE", frase: g("cat-frase") };
+    const dados = {
+      nome, emoji: g("cat-emoji"),
+      cor: document.getElementById("cat-cor")?.value || "#7B2FBE",
+      frase: g("cat-frase"),
+    };
     if (!dados.frase) dados.frase = UTIL.gerarFraseCategoria(nome);
     if (id) { CATEGORIAS.editar(id, dados); } else { CATEGORIAS.criar(dados); }
-    form.reset(); document.getElementById("cat-id").value = "";
+    form.reset();
+    document.getElementById("cat-id").value = "";
     document.getElementById("form-cat-titulo").textContent = "Nova Categoria";
-    renderizarAdmCategorias();
+    TABS.ir("sec-categorias", "tab-categorias-lista");
     MODAL.sucesso(ENUMS.MSGS.CATEGORIA_SALVA);
   });
   document.getElementById("cat-nome")?.addEventListener("input", e => {
@@ -1152,11 +1558,16 @@ function bindFormComplemento() {
     const id = g("comp-id");
     const nome = g("comp-nome");
     if (!nome) { MODAL.erro(ENUMS.MSGS.CAMPO_OBRIGATORIO); return; }
-    const dados = { nome, preco: parseFloat(g("comp-preco")) || 0, estoque: g("comp-estoque") !== "" ? parseInt(g("comp-estoque")) : "" };
+    const dados = {
+      nome,
+      preco: parseFloat(g("comp-preco")) || 0,
+      estoque: g("comp-estoque") !== "" ? parseInt(g("comp-estoque")) : "",
+    };
     if (id) { COMPLEMENTOS.editar(id, dados); } else { COMPLEMENTOS.criar(dados); }
-    form.reset(); document.getElementById("comp-id").value = "";
+    form.reset();
+    document.getElementById("comp-id").value = "";
     document.getElementById("form-comp-titulo").textContent = "Novo Complemento";
-    renderizarAdmComplementos();
+    TABS.ir("sec-complementos", "tab-complementos-lista");
     MODAL.sucesso(ENUMS.MSGS.COMPLEMENTO_SALVO);
   });
 }
@@ -1167,7 +1578,7 @@ function bindCarrinhoFinalizacao() {
       const isEntrega = r.value === ENUMS.TIPO_ENTREGA.ENTREGA;
       const enderecoArea = document.getElementById("area-endereco");
       if (enderecoArea) enderecoArea.style.display = isEntrega ? "block" : "none";
-      CARRINHO.renderizarCarrinho();
+      CARRINHO._atualizarTotais();
     });
   });
   document.getElementById("btn-finalizar")?.addEventListener("click", () => {
@@ -1176,7 +1587,10 @@ function bindCarrinhoFinalizacao() {
     const tipoEntrega = document.querySelector('input[name="tipo-entrega"]:checked')?.value;
     const pag = document.getElementById("cliente-pagamento")?.value;
     const endereco = document.getElementById("cliente-endereco")?.value?.trim();
-    if (tipoEntrega === ENUMS.TIPO_ENTREGA.ENTREGA && !endereco) { MODAL.erro("Informe o endereço de entrega."); return; }
+    if (tipoEntrega === ENUMS.TIPO_ENTREGA.ENTREGA && !endereco) {
+      MODAL.erro("Informe o endereço de entrega.");
+      return;
+    }
     WPP.enviar({ nome, telefone: tel }, tipoEntrega, pag, endereco);
   });
 }
@@ -1192,25 +1606,32 @@ document.addEventListener("DOMContentLoaded", () => {
   const isAdmin = document.body.classList.contains("pagina-admin");
 
   if (isAdmin) {
-    document.getElementById("login-senha")?.addEventListener("keydown", e => { if (e.key === "Enter") fazerLogin(); });
-    if (!STATE.adminLogado) {
+    document.getElementById("login-senha")?.addEventListener("keydown", e => {
+      if (e.key === "Enter") fazerLogin();
+    });
+    if (!STATE.get("adminLogado")) {
       document.getElementById("login-overlay")?.classList.add("active");
     } else {
       renderizarAdmin();
       mostrarSecao("sec-dashboard");
+      TABS.initAll();
     }
     bindFormProduto();
     bindFormCategoria();
     bindFormComplemento();
     document.querySelectorAll(".adm-nav-btn").forEach(btn => {
-      btn.addEventListener("click", () => mostrarSecao(btn.dataset.sec));
+      btn.addEventListener("click", () => {
+        const sec = btn.dataset.sec;
+        mostrarSecao(sec);
+        // Init tabs da seção ao abrir
+        setTimeout(() => TABS.init(sec), 50);
+      });
     });
   } else {
     renderizarCatalogo();
     bindCarrinhoFinalizacao();
     document.getElementById("busca-input")?.addEventListener("input", e => buscarProdutos(e.target.value));
     document.getElementById("overlay-carrinho")?.addEventListener("click", fecharCarrinho);
-    // Opções de entrega
     const opcEntrega = document.getElementById("opc-entrega");
     const opcRetirada = document.getElementById("opc-retirada");
     if (!CONFIG.delivery.entregaAtiva && opcEntrega) opcEntrega.style.display = "none";
